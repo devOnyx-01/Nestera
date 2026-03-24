@@ -1,0 +1,50 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { Vote } from './vote.entity';
+
+export enum ProposalStatus {
+  ACTIVE = 'Active',
+  PASSED = 'Passed',
+  FAILED = 'Failed',
+  CANCELLED = 'Cancelled',
+}
+
+@Entity('governance_proposals')
+export class GovernanceProposal {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  /** On-chain proposal ID from the DAO contract */
+  @Column({ unique: true })
+  onChainId: string;
+
+  @Column({ nullable: true })
+  proposer: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ type: 'enum', enum: ProposalStatus, default: ProposalStatus.ACTIVE })
+  status: ProposalStatus;
+
+  @Column({ type: 'bigint', nullable: true })
+  startBlock: number;
+
+  @Column({ type: 'bigint', nullable: true })
+  endBlock: number;
+
+  @OneToMany(() => Vote, (vote) => vote.proposal)
+  votes: Vote[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}

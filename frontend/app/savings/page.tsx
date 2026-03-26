@@ -10,7 +10,7 @@ import {
   ArrowUp,
   PiggyBank,
   Home,
-  Airplane,
+  Airplay,
   ShoppingBag,
 } from "lucide-react";
 import GoalCard, { GoalStatus } from "./components/GoalCard";
@@ -135,7 +135,7 @@ export default function GoalBasedSavingsPage() {
             },
             {
               id: '3',
-              icon: <Airplane size={20} />,
+              icon: <Airplay size={20} />,
               title: 'Summer Trip',
               status: 'behind-schedule' as GoalStatus,
               targetAmount: '$8,000',

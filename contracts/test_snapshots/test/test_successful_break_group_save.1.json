@@ -1141,6 +1141,14 @@
                   "map": [
                     {
                       "key": {
+                        "symbol": "claimed_tokens"
+                      },
+                      "val": {
+                        "i128": "0"
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "current_streak"
                       },
                       "val": {
@@ -1185,6 +1193,14 @@
                       },
                       "val": {
                         "u128": "0"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "unclaimed_tokens"
+                      },
+                      "val": {
+                        "i128": "0"
                       }
                     }
                   ]
@@ -1235,6 +1251,14 @@
                   "map": [
                     {
                       "key": {
+                        "symbol": "claimed_tokens"
+                      },
+                      "val": {
+                        "i128": "0"
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "current_streak"
                       },
                       "val": {
@@ -1279,6 +1303,14 @@
                       },
                       "val": {
                         "u128": "0"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "unclaimed_tokens"
+                      },
+                      "val": {
+                        "i128": "0"
                       }
                     }
                   ]
@@ -1329,6 +1361,14 @@
                   "map": [
                     {
                       "key": {
+                        "symbol": "claimed_tokens"
+                      },
+                      "val": {
+                        "i128": "0"
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "current_streak"
                       },
                       "val": {
@@ -1373,6 +1413,14 @@
                       },
                       "val": {
                         "u128": "0"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "unclaimed_tokens"
+                      },
+                      "val": {
+                        "i128": "0"
                       }
                     }
                   ]

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GovernanceController } from './governance.controller';
+import { GovernanceProposalsController } from './governance-proposals.controller';
 import { GovernanceService } from './governance.service';
 import { GovernanceIndexerService } from './governance-indexer.service';
 import { UserModule } from '../user/user.module';
@@ -14,7 +15,7 @@ import { Vote } from './entities/vote.entity';
     BlockchainModule,
     TypeOrmModule.forFeature([GovernanceProposal, Vote]),
   ],
-  controllers: [GovernanceController],
+  controllers: [GovernanceController, GovernanceProposalsController],
   providers: [GovernanceService, GovernanceIndexerService],
 })
 export class GovernanceModule {}

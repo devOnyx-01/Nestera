@@ -4,6 +4,9 @@ import React from "react";
 import Link from "next/link";
 import {
   LayoutGrid,
+  List,
+  Search,
+  ChevronDown,
   CheckCircle2,
   Trophy,
   Banknote,
@@ -18,6 +21,89 @@ import GoalCard, { GoalStatus } from "./components/GoalCard";
 // export const metadata = { title: "Goal-Based Savings - Nestera" };
 
 export default function GoalBasedSavingsPage() {
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("All");
+  const [sortBy, setSortBy] = React.useState("Progress");
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+  const goals = [
+    {
+      id: "1",
+      icon: <PiggyBank size={20} />,
+      title: "Emergency Fund",
+      status: "active" as GoalStatus,
+      targetAmount: "$12,000",
+      currentSaved: "$6,400",
+      remainingAmount: "$5,600",
+      progressPercent: 53,
+      scheduleLabel: "By Dec 20, 2026",
+      contributionFrequency: "Weekly",
+      nextContributionLabel: "Next contribution",
+      nextContributionValue: "$150 on Jun 28",
+    },
+    {
+      id: "2",
+      icon: <Home size={20} />,
+      title: "Down Payment",
+      status: "near-deadline" as GoalStatus,
+      targetAmount: "$40,000",
+      currentSaved: "$28,000",
+      remainingAmount: "$12,000",
+      progressPercent: 70,
+      scheduleLabel: "Due Oct 03, 2026",
+      contributionFrequency: "Monthly",
+      nextContributionLabel: "Next contribution",
+      nextContributionValue: "$1,000 on Jul 01",
+    },
+    {
+      id: "3",
+      icon: <Airplay size={20} />,
+      title: "Summer Trip",
+      status: "behind-schedule" as GoalStatus,
+      targetAmount: "$8,000",
+      currentSaved: "$3,100",
+      remainingAmount: "$4,900",
+      progressPercent: 39,
+      scheduleLabel: "By Aug 15, 2026",
+      contributionFrequency: "Every other week",
+      nextContributionLabel: "Next contribution",
+      nextContributionValue: "$250 on Jul 05",
+    },
+    {
+      id: "4",
+      icon: <ShoppingBag size={20} />,
+      title: "New Laptop",
+      status: "paused" as GoalStatus,
+      targetAmount: "$2,500",
+      currentSaved: "$1,500",
+      remainingAmount: "$1,000",
+      progressPercent: 60,
+      scheduleLabel: "Paused until decision",
+      contributionFrequency: "Paused",
+      nextContributionLabel: "Next contribution",
+      nextContributionValue: "N/A",
+    },
+  ];
+  const featuredGoal = goals[1];
+  const filteredGoals = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    let filtered = goals.filter((goal) => {
+      const matchesSearch =
+        !query ||
+        goal.title.toLowerCase().includes(query) ||
+        goal.contributionFrequency.toLowerCase().includes(query);
+      const matchesStatus = statusFilter === "All" || goal.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+
+    filtered = filtered.sort((a, b) =>
+      sortBy === "Target"
+        ? parseInt(b.targetAmount.replace(/[$,]/g, ""), 10) -
+          parseInt(a.targetAmount.replace(/[$,]/g, ""), 10)
+        : b.progressPercent - a.progressPercent,
+    );
+    return filtered;
+  }, [goals, searchQuery, sortBy, statusFilter]);
+
   return (
     <section className="min-h-screen w-full bg-[#0b1f20]">
       {/* Header Band */}
@@ -101,67 +187,102 @@ export default function GoalBasedSavingsPage() {
 
       {/* Goal cards grid */}
       <div className="w-full max-w-7xl mx-auto px-6 md:px-8 pb-16">
+        <div className="rounded-2xl border border-white/10 bg-[#0f2c2c] p-5 md:p-6 mb-6 shadow-[0_12px_30px_rgba(2,12,12,0.45)]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-white m-0">Featured Goal</h3>
+            <span className="px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/25 text-cyan-300 text-xs font-semibold">
+              Focus
+            </span>
+          </div>
+          <GoalCard
+            icon={featuredGoal.icon}
+            title={featuredGoal.title}
+            status={featuredGoal.status}
+            targetAmount={featuredGoal.targetAmount}
+            currentSaved={featuredGoal.currentSaved}
+            remainingAmount={featuredGoal.remainingAmount}
+            progressPercent={featuredGoal.progressPercent}
+            scheduleLabel={featuredGoal.scheduleLabel}
+            contributionFrequency={featuredGoal.contributionFrequency}
+            nextContributionLabel={featuredGoal.nextContributionLabel}
+            nextContributionValue={featuredGoal.nextContributionValue}
+            onAddFunds={() => console.log("Add funds", featuredGoal.id)}
+            onViewDetails={() => console.log("View details", featuredGoal.id)}
+            onOverflowAction={() => console.log("More actions", featuredGoal.id)}
+          />
+        </div>
+
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4 mb-5">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5e8c96]"
+              size={18}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search goals..."
+              className="w-full bg-[#0e2330] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-[#4e7a86] focus:outline-hidden focus:border-cyan-500/50 transition-colors"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-3 rounded-xl border bg-[#0e2330] border-white/5 text-[#d3ecef] text-sm focus:outline-hidden"
+            >
+              <option value="All">Status: All</option>
+              <option value="active">Active</option>
+              <option value="near-deadline">Near Deadline</option>
+              <option value="behind-schedule">Behind Schedule</option>
+              <option value="paused">Paused</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => setSortBy(sortBy === "Progress" ? "Target" : "Progress")}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl border bg-[#0e2330] border-white/5 text-[#d3ecef] text-sm"
+            >
+              Sort: {sortBy}
+              <ChevronDown size={14} className="opacity-70" />
+            </button>
+            <div className="flex bg-[#0e2330] p-1 rounded-xl border border-white/5">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-cyan-500/10 text-cyan-400"
+                    : "text-[#5e8c96] hover:text-white"
+                }`}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === "list"
+                    ? "bg-cyan-500/10 text-cyan-400"
+                    : "text-[#5e8c96] hover:text-white"
+                }`}
+              >
+                <List size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+
         <h2 className="text-xl md:text-2xl text-white font-bold mb-5">Your Savings Goals</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {[
-            {
-              id: '1',
-              icon: <PiggyBank size={20} />,
-              title: 'Emergency Fund',
-              status: 'active' as GoalStatus,
-              targetAmount: '$12,000',
-              currentSaved: '$6,400',
-              remainingAmount: '$5,600',
-              progressPercent: 53,
-              scheduleLabel: 'By Dec 20, 2026',
-              contributionFrequency: 'Weekly',
-              nextContributionLabel: 'Next contribution',
-              nextContributionValue: '$150 on Jun 28',
-            },
-            {
-              id: '2',
-              icon: <Home size={20} />,
-              title: 'Down Payment',
-              status: 'near-deadline' as GoalStatus,
-              targetAmount: '$40,000',
-              currentSaved: '$28,000',
-              remainingAmount: '$12,000',
-              progressPercent: 70,
-              scheduleLabel: 'Due Oct 03, 2026',
-              contributionFrequency: 'Monthly',
-              nextContributionLabel: 'Next contribution',
-              nextContributionValue: '$1,000 on Jul 01',
-            },
-            {
-              id: '3',
-              icon: <Airplay size={20} />,
-              title: 'Summer Trip',
-              status: 'behind-schedule' as GoalStatus,
-              targetAmount: '$8,000',
-              currentSaved: '$3,100',
-              remainingAmount: '$4,900',
-              progressPercent: 39,
-              scheduleLabel: 'By Aug 15, 2026',
-              contributionFrequency: 'Every other week',
-              nextContributionLabel: 'Next contribution',
-              nextContributionValue: '$250 on Jul 05',
-            },
-            {
-              id: '4',
-              icon: <ShoppingBag size={20} />,
-              title: 'New Laptop',
-              status: 'paused' as GoalStatus,
-              targetAmount: '$2,500',
-              currentSaved: '$1,500',
-              remainingAmount: '$1,000',
-              progressPercent: 60,
-              scheduleLabel: 'Paused until decision',
-              contributionFrequency: 'Paused',
-              nextContributionLabel: 'Next contribution',
-              nextContributionValue: 'N/A',
-            },
-          ].map((goal) => (
+        <div
+          className={`grid gap-5 ${
+            viewMode === "grid"
+              ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+              : "grid-cols-1"
+          }`}
+        >
+          {filteredGoals.map((goal) => (
             <GoalCard
               key={goal.id}
               icon={goal.icon}
@@ -175,9 +296,9 @@ export default function GoalBasedSavingsPage() {
               contributionFrequency={goal.contributionFrequency}
               nextContributionLabel={goal.nextContributionLabel}
               nextContributionValue={goal.nextContributionValue}
-              onAddFunds={() => console.log('Add funds', goal.id)}
-              onViewDetails={() => console.log('View details', goal.id)}
-              onOverflowAction={() => console.log('More actions', goal.id)}
+              onAddFunds={() => console.log("Add funds", goal.id)}
+              onViewDetails={() => console.log("View details", goal.id)}
+              onOverflowAction={() => console.log("More actions", goal.id)}
             />
           ))}
         </div>

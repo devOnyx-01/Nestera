@@ -1,26 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { GovernanceService } from './governance.service';
 import { UserService } from '../user/user.service';
 import { StellarService } from '../blockchain/stellar.service';
 import { SavingsService } from '../blockchain/savings.service';
+import { GovernanceProposal } from './entities/governance-proposal.entity';
+import { Vote } from './entities/vote.entity';
 
 describe('GovernanceService', () => {
   let service: GovernanceService;
   let userService: { findById: jest.Mock };
   let stellarService: { getDelegationForUser: jest.Mock };
   let savingsService: { getUserVaultBalance: jest.Mock };
+  let proposalRepo: { findOneBy: jest.Mock };
+  let voteRepo: { find: jest.Mock };
 
   beforeEach(async () => {
     userService = { findById: jest.fn() };
     stellarService = { getDelegationForUser: jest.fn() };
     savingsService = { getUserVaultBalance: jest.fn() };
+    proposalRepo = { findOneBy: jest.fn() };
+    voteRepo = { find: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GovernanceService,
         { provide: UserService, useValue: userService },
         { provide: StellarService, useValue: stellarService },
-        { provide: SavingsService, useValue: savingsService }, // 👈 this was missing
+        { provide: SavingsService, useValue: savingsService },
+        {
+          provide: getRepositoryToken(GovernanceProposal),
+          useValue: proposalRepo,
+        },
+        { provide: getRepositoryToken(Vote), useValue: voteRepo },
       ],
     }).compile();
 

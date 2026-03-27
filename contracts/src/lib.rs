@@ -19,6 +19,7 @@ mod lock;
 pub mod rewards;
 mod storage_types;
 pub mod strategy;
+pub mod token;
 pub mod treasury;
 mod ttl;
 mod upgrade;
@@ -164,6 +165,10 @@ impl NesteraContract {
             .set(&DataKey::AdminPublicKey, &admin_public_key);
         env.storage().instance().set(&DataKey::Initialized, &true);
         env.storage().persistent().set(&DataKey::Paused, &false);
+
+        // Initialize native protocol token (supply assigned to admin/deployer as treasury)
+        token::initialize_token(&env, admin.clone(), 1_000_000_000_0000000)
+            .unwrap_or_else(|e| panic_with_error!(&env, e));
 
         // Extend TTL for paused state
         ttl::extend_config_ttl(&env, &DataKey::Paused);
@@ -766,6 +771,11 @@ impl NesteraContract {
             .unwrap_or(0)
     }
 
+    /// Returns the native protocol token metadata (name, symbol, decimals, total_supply, treasury).
+    pub fn get_token_metadata(env: Env) -> Result<token::TokenMetadata, SavingsError> {
+        token::get_token_metadata(&env)
+    }
+
     // ========== Rewards Functions ==========
 
     pub fn init_rewards_config(
@@ -873,6 +883,47 @@ impl NesteraContract {
     pub fn redeem_points(env: Env, user: Address, amount: u128) -> Result<(), SavingsError> {
         user.require_auth();
         rewards::redemption::redeem_points(&env, user, amount)
+    }
+
+    /// Sets the token contract address used for distributing native token rewards (admin only).
+    pub fn set_reward_token(env: Env, admin: Address, token: Address) -> Result<(), SavingsError> {
+        let stored_admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(SavingsError::Unauthorized)?;
+        stored_admin.require_auth();
+        if admin != stored_admin {
+            return Err(SavingsError::Unauthorized);
+        }
+        env.storage()
+            .instance()
+            .set(&rewards::storage_types::RewardsDataKey::RewardToken, &token);
+        Ok(())
+    }
+
+    /// Converts a user's accumulated points into claimable token rewards.
+    /// Must be called before claim_rewards.
+    pub fn convert_points_to_tokens(
+        env: Env,
+        user: Address,
+        points_to_convert: u128,
+        tokens_per_point: i128,
+    ) -> Result<i128, SavingsError> {
+        user.require_auth();
+        rewards::storage::convert_points_to_tokens(&env, user, points_to_convert, tokens_per_point)
+    }
+
+    /// Claims all unclaimed token rewards, transferring native tokens to the user.
+    /// Prevents double-claiming and emits RewardsClaimed event.
+    pub fn claim_rewards(env: Env, user: Address) -> Result<i128, SavingsError> {
+        user.require_auth();
+        ensure_not_paused(&env)?;
+        crate::security::acquire_reentrancy_guard(&env)?;
+        let contract_address = env.current_contract_address();
+        let res = rewards::storage::claim_rewards(&env, user, contract_address);
+        crate::security::release_reentrancy_guard(&env);
+        res
     }
 
     // ========== AutoSave Functions ==========

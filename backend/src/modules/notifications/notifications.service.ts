@@ -174,6 +174,91 @@ export class NotificationsService {
   }
 
   /**
+   * Handle goal milestone events emitted by the scheduler.
+   * Payload: { userId, goalId, percentage, goalName, metadata? }
+   */
+  @OnEvent('goal.milestone')
+  async handleGoalMilestone(event: {
+    userId: string;
+    goalId: string;
+    percentage: number;
+    goalName: string;
+    metadata?: Record<string, any>;
+  }) {
+    this.logger.log(
+      `Processing goal.milestone event for user ${event.userId} (goal ${event.goalId})`,
+    );
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: event.userId },
+      });
+
+      if (!user) {
+        this.logger.warn(
+          `User ${event.userId} not found for goal milestone notification`,
+        );
+        return;
+      }
+
+      const preferences = await this.getOrCreatePreferences(event.userId);
+
+      const title =
+        event.percentage === 100
+          ? `Goal complete: ${event.goalName}`
+          : `Milestone reached: ${event.percentage}%`;
+
+      const message =
+        event.percentage === 100
+          ? `Amazing — you've reached your goal "${event.goalName}"!`
+          : `You're ${event.percentage}% of the way to "${event.goalName}" — keep it up!`;
+
+      // Create in-app notification if enabled
+      if (
+        preferences.inAppNotifications &&
+        preferences.milestoneNotifications
+      ) {
+        await this.createNotification({
+          userId: event.userId,
+          type:
+            event.percentage === 100
+              ? NotificationType.GOAL_COMPLETED
+              : NotificationType.GOAL_MILESTONE,
+          title,
+          message,
+          metadata: {
+            goalId: event.goalId,
+            percentage: event.percentage,
+            ...event.metadata,
+          },
+        });
+      }
+
+      // Send email if enabled
+      if (
+        preferences.emailNotifications &&
+        preferences.milestoneNotifications
+      ) {
+        await this.mailService.sendGoalMilestoneEmail(
+          user.email,
+          user.name || 'User',
+          event.goalName,
+          event.percentage,
+        );
+      }
+
+      this.logger.log(
+        `Goal milestone notification processed for user ${event.userId} (goal ${event.goalId})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error processing goal.milestone event for user ${event.userId}`,
+        error,
+      );
+    }
+  }
+
+  /**
    * Create a notification in the database
    */
   async createNotification(data: {

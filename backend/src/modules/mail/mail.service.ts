@@ -74,4 +74,32 @@ export class MailService {
       );
     }
   }
+
+  async sendGoalMilestoneEmail(
+    userEmail: string,
+    name: string,
+    goalName: string,
+    percentage: number,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: userEmail,
+        subject: `Congrats — ${percentage}% of your goal achieved!`,
+        template: './goal-milestone',
+        context: {
+          name: name || 'User',
+          goalName,
+          percentage,
+        },
+      });
+      this.logger.log(
+        `Goal milestone email (${percentage}%) sent to ${userEmail}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send goal milestone email to ${userEmail}`,
+        error,
+      );
+    }
+  }
 }

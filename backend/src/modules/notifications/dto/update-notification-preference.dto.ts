@@ -26,4 +26,9 @@ export class UpdateNotificationPreferenceDto {
   @IsOptional()
   @IsBoolean()
   yieldNotifications?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  milestoneNotifications?: boolean;
 }

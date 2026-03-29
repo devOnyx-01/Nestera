@@ -6,14 +6,17 @@ import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { MailModule } from '../mail/mail.module';
 import { User } from '../user/entities/user.entity';
+import { MilestoneSchedulerService } from './milestone-scheduler.service';
+import { SavingsModule } from '../savings/savings.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Notification, NotificationPreference, User]),
     MailModule,
+    SavingsModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
+  providers: [NotificationsService, MilestoneSchedulerService],
   exports: [NotificationsService],
 })
 export class NotificationsModule {}

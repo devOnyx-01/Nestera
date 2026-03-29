@@ -18,11 +18,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role?: string }) {
+  async validate(payload: {
+    sub: string;
+    email: string;
+    role?: string;
+    kycStatus?: string;
+  }) {
     return {
       id: payload.sub,
       email: payload.email,
       role: payload.role ?? 'USER',
+      kycStatus: payload.kycStatus ?? 'NOT_SUBMITTED',
     };
   }
 }

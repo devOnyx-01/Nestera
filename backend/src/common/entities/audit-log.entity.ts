@@ -1,17 +1,17 @@
 import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    Index,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  Index,
 } from 'typeorm';
 
 /**
  * AuditLog Entity
- * 
+ *
  * Stores structured audit entries for all trade and dispute mutations.
  * Enables forensic traceability and incident debugging.
- * 
+ *
  * Indexed by:
  * - correlation_id: Trace full request lifecycle
  * - resource_id: Find all mutations for a specific trade/dispute
@@ -26,42 +26,42 @@ import {
 @Index('idx_audit_logs_timestamp', ['timestamp'])
 @Index('idx_audit_logs_action', ['action'])
 export class AuditLog {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    correlationId: string;
+  @Column()
+  correlationId: string;
 
-    @CreateDateColumn()
-    timestamp: Date;
+  @CreateDateColumn()
+  timestamp: Date;
 
-    @Column()
-    endpoint: string;
+  @Column()
+  endpoint: string;
 
-    @Column()
-    method: string;
+  @Column()
+  method: string;
 
-    @Column()
-    action: string; // CREATE, UPDATE, DELETE
+  @Column()
+  action: string; // CREATE, UPDATE, DELETE
 
-    @Column()
-    actor: string; // wallet or email
+  @Column()
+  actor: string; // wallet or email
 
-    @Column({ nullable: true, type: 'uuid' })
-    resourceId: string | null;
+  @Column({ nullable: true, type: 'uuid' })
+  resourceId: string | null;
 
-    @Column()
-    resourceType: string; // TRADE, DISPUTE, CLAIM
+  @Column()
+  resourceType: string; // TRADE, DISPUTE, CLAIM
 
-    @Column()
-    statusCode: number;
+  @Column()
+  statusCode: number;
 
-    @Column()
-    durationMs: number;
+  @Column()
+  durationMs: number;
 
-    @Column({ default: true })
-    success: boolean;
+  @Column({ default: true })
+  success: boolean;
 
-    @Column({ nullable: true, type: 'text' })
-    errorMessage: string | null;
+  @Column({ nullable: true, type: 'text' })
+  errorMessage: string | null;
 }

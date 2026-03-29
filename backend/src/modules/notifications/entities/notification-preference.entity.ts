@@ -31,6 +31,9 @@ export class NotificationPreference {
   @Column({ type: 'boolean', default: true })
   yieldNotifications: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  milestoneNotifications: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

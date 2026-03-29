@@ -76,6 +76,16 @@ export class TransactionResponseDto {
   @ApiProperty({ description: 'Additional metadata', nullable: true })
   metadata: Record<string, unknown> | null;
 
+  @ApiProperty({ description: 'Transaction category', nullable: true })
+  category?: string | null;
+
+  @ApiProperty({
+    description: 'Tags attached to the transaction',
+    nullable: true,
+    isArray: true,
+  })
+  tags?: string[];
+
   @ApiProperty({ description: 'Transaction creation date (ISO 8601)' })
   createdAt: string;
 

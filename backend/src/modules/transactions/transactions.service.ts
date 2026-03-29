@@ -72,6 +72,8 @@ export class TransactionsService {
               publicKey: dto.publicKey ?? '',
               eventId: dto.eventId,
               transactionHash: dto.transactionHash ?? '',
+              category: dto.category ?? '',
+              tags: dto.tags ? dto.tags.join(';') : '',
               ledgerSequence: dto.ledgerSequence ?? '',
               poolId: dto.poolId ?? '',
               assetId: dto.assetId ?? '',
@@ -127,6 +129,21 @@ export class TransactionsService {
       });
     }
 
+    // Filter by category
+    if (queryDto.category) {
+      queryBuilder.andWhere('transaction.category = :category', {
+        category: queryDto.category,
+      });
+    }
+
+    // Filter by tags (any overlap)
+    if (queryDto.tags && queryDto.tags.length > 0) {
+      // Use Postgres array overlap operator (&&)
+      queryBuilder.andWhere('transaction.tags && :tags', {
+        tags: queryDto.tags,
+      });
+    }
+
     // Apply ordering
     queryBuilder.orderBy('transaction.createdAt', queryDto.order ?? 'DESC');
 
@@ -149,6 +166,8 @@ export class TransactionsService {
       publicKey: transaction.publicKey,
       eventId: transaction.eventId,
       transactionHash: transaction.transactionHash,
+      category: transaction.category ?? null,
+      tags: transaction.tags ?? [],
       ledgerSequence: transaction.ledgerSequence,
       poolId: transaction.poolId,
       metadata: transaction.metadata,
@@ -166,6 +185,88 @@ export class TransactionsService {
       // Add assetId for interceptor formatting (will be enriched by interceptor)
       assetId,
     } as TransactionResponseDto;
+  }
+
+  async tagTransaction(userId: string, transactionId: string, payload: any) {
+    const tx = await this.transactionRepository.findOne({
+      where: { id: transactionId, userId },
+    });
+
+    if (!tx) {
+      return { ok: false, message: 'Transaction not found' };
+    }
+
+    // Handle tags
+    if (payload?.tags) {
+      const current = tx.tags ?? [];
+      const incoming = Array.isArray(payload.tags) ? payload.tags : [];
+
+      if (payload.action === 'remove') {
+        tx.tags = current.filter((t) => !incoming.includes(t));
+      } else if (payload.action === 'set') {
+        tx.tags = incoming;
+      } else {
+        // add
+        const set = new Set(current.concat(incoming));
+        tx.tags = Array.from(set);
+      }
+    }
+
+    if (typeof payload?.category === 'string') {
+      tx.category = payload.category;
+    }
+
+    await this.transactionRepository.save(tx);
+
+    return { ok: true, transaction: this.transformToResponseDto(tx) };
+  }
+
+  async listCategories(userId: string) {
+    const rows = await this.transactionRepository
+      .createQueryBuilder('transaction')
+      .select('DISTINCT transaction.category', 'category')
+      .where('transaction.userId = :userId', { userId })
+      .andWhere('transaction.category IS NOT NULL')
+      .orderBy('transaction.category', 'ASC')
+      .getRawMany();
+
+    return rows.map((r) => r.category);
+  }
+
+  async bulkTag(userId: string, body: any) {
+    // Support ids-based operations for now
+    if (!body?.ids || !Array.isArray(body.ids) || !body.ids.length) {
+      return { ok: false, message: 'No ids provided' };
+    }
+
+    const txs = await this.transactionRepository.findBy({
+      id: body.ids,
+      userId,
+    } as any);
+
+    for (const tx of txs) {
+      if (body.tags) {
+        const current = tx.tags ?? [];
+        const incoming = Array.isArray(body.tags) ? body.tags : [];
+
+        if (body.action === 'remove') {
+          tx.tags = current.filter((t) => !incoming.includes(t));
+        } else if (body.action === 'set') {
+          tx.tags = incoming;
+        } else {
+          const set = new Set(current.concat(incoming));
+          tx.tags = Array.from(set);
+        }
+      }
+
+      if (typeof body.category === 'string') {
+        tx.category = body.category;
+      }
+    }
+
+    await this.transactionRepository.save(txs);
+
+    return { ok: true, count: txs.length };
   }
 
   /**

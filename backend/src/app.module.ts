@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.interceptor';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
+import { TieredThrottlerGuard } from './common/guards/tiered-throttler.guard';
+import { CommonModule } from './common/common.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import * as Joi from 'joi';
@@ -29,7 +31,6 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { TestRbacModule } from './test-rbac/test-rbac.module';
 import { TestThrottlingModule } from './test-throttling/test-throttling.module';
-import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 
 const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
@@ -73,7 +74,8 @@ const envValidationSchema = Joi.object({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        const isProduction =
+          configService.get<string>('NODE_ENV') === 'production';
         return {
           pinoHttp: {
             transport: isProduction
@@ -165,6 +167,7 @@ const envValidationSchema = Joi.object({
     TransactionsModule,
     TestRbacModule,
     TestThrottlingModule,
+    CommonModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',
@@ -188,7 +191,7 @@ const envValidationSchema = Joi.object({
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: TieredThrottlerGuard,
     },
     {
       provide: APP_INTERCEPTOR,
@@ -200,4 +203,4 @@ const envValidationSchema = Joi.object({
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

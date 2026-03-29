@@ -176,7 +176,8 @@ export class DepositHandler {
         'to',
       ]) ?? '';
 
-    const amountRaw = asRecord['amount'] ?? asRecord['value'] ?? asRecord['amt'];
+    const amountRaw =
+      asRecord['amount'] ?? asRecord['value'] ?? asRecord['amt'];
 
     const amount =
       typeof amountRaw === 'bigint'

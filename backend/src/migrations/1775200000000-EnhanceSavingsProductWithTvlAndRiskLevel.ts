@@ -5,13 +5,11 @@ import {
   TableColumnOptions,
 } from 'typeorm';
 
-export class EnhanceSavingsProductWithTvlAndRiskLevel1775200000000
-  implements MigrationInterface
-{
+export class EnhanceSavingsProductWithTvlAndRiskLevel1775200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add tvlAmount column if it doesn't exist
     const table = await queryRunner.getTable('savings_products');
-    
+
     if (table && !table.findColumnByName('tvlAmount')) {
       await queryRunner.addColumn(
         'savings_products',
@@ -29,7 +27,7 @@ export class EnhanceSavingsProductWithTvlAndRiskLevel1775200000000
     // Update riskLevel column from varchar to enum
     if (table && table.findColumnByName('riskLevel')) {
       const riskLevelColumn = table.findColumnByName('riskLevel');
-      
+
       if (riskLevelColumn && riskLevelColumn.type !== 'enum') {
         // Drop the old constraint and column with old data
         await queryRunner.changeColumn(

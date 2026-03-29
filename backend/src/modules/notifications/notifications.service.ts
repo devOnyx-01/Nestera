@@ -6,7 +6,8 @@ import { Notification, NotificationType } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { MailService } from '../mail/mail.service';
 import { User } from '../user/entities/user.entity';
-import { InterestCreditedEvent } from '../savings/services/interest-calculation.service';
+import { WaitlistEntry } from '../savings/entities/waitlist-entry.entity';
+import { WaitlistEvent } from '../savings/entities/waitlist-event.entity';
 
 export interface SweepCompletedEvent {
   userId: string;
@@ -35,6 +36,10 @@ export class NotificationsService {
     private readonly preferenceRepository: Repository<NotificationPreference>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(WaitlistEntry)
+    private readonly waitlistRepository: Repository<WaitlistEntry>,
+    @InjectRepository(WaitlistEvent)
+    private readonly waitlistEventRepository: Repository<WaitlistEvent>,
     private readonly mailService: MailService,
   ) {}
 
@@ -218,6 +223,179 @@ export class NotificationsService {
     } catch (error) {
       this.logger.error(
         `Error processing claim.updated event for claim ${event.claimId}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Handle goal milestone events emitted by the scheduler.
+   * Payload: { userId, goalId, percentage, goalName, metadata? }
+   */
+  @OnEvent('goal.milestone')
+  async handleGoalMilestone(event: {
+    userId: string;
+    goalId: string;
+    percentage: number;
+    goalName: string;
+    metadata?: Record<string, any>;
+  }) {
+    this.logger.log(
+      `Processing goal.milestone event for user ${event.userId} (goal ${event.goalId})`,
+    );
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: event.userId },
+      });
+
+      if (!user) {
+        this.logger.warn(
+          `User ${event.userId} not found for goal milestone notification`,
+        );
+        return;
+      }
+
+      const preferences = await this.getOrCreatePreferences(event.userId);
+
+      const title =
+        event.percentage === 100
+          ? `Goal complete: ${event.goalName}`
+          : `Milestone reached: ${event.percentage}%`;
+
+      const message =
+        event.percentage === 100
+          ? `Amazing — you've reached your goal "${event.goalName}"!`
+          : `You're ${event.percentage}% of the way to "${event.goalName}" — keep it up!`;
+
+      // Create in-app notification if enabled
+      if (
+        preferences.inAppNotifications &&
+        preferences.milestoneNotifications
+      ) {
+        await this.createNotification({
+          userId: event.userId,
+          type:
+            event.percentage === 100
+              ? NotificationType.GOAL_COMPLETED
+              : NotificationType.GOAL_MILESTONE,
+          title,
+          message,
+          metadata: {
+            goalId: event.goalId,
+            percentage: event.percentage,
+            ...event.metadata,
+          },
+        });
+      }
+
+      // Send email if enabled
+      if (
+        preferences.emailNotifications &&
+        preferences.milestoneNotifications
+      ) {
+        await this.mailService.sendGoalMilestoneEmail(
+          user.email,
+          user.name || 'User',
+          event.goalName,
+          event.percentage,
+        );
+      }
+
+      this.logger.log(
+        `Goal milestone notification processed for user ${event.userId} (goal ${event.goalId})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error processing goal.milestone event for user ${event.userId}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Handle product availability events and notify top waitlist entries.
+   * Payload: { productId, spots }
+   */
+  @OnEvent('waitlist.product.available')
+  async handleWaitlistAvailability(event: {
+    productId: string;
+    spots?: number;
+  }) {
+    const spots = event.spots ?? 1;
+
+    try {
+      // Get top entries by priority then createdAt
+      const entries = await this.waitlistRepository
+        .createQueryBuilder('w')
+        .where('w.productId = :productId', { productId: event.productId })
+        .andWhere('w.notifiedAt IS NULL')
+        .orderBy('w.priority', 'DESC')
+        .addOrderBy('w.createdAt', 'ASC')
+        .limit(spots)
+        .getMany();
+
+      if (!entries.length) return;
+
+      for (const entry of entries) {
+        const user = await this.userRepository.findOne({
+          where: { id: entry.userId },
+        });
+
+        if (!user) continue;
+
+        const title = 'Savings product available';
+        const message = `A savings product you're waiting for is now available. Visit the app to claim your spot.`;
+
+        // In-app notification
+        const preferences = await this.getOrCreatePreferences(entry.userId);
+
+        if (preferences.inAppNotifications) {
+          await this.createNotification({
+            userId: entry.userId,
+            type: NotificationType.WAITLIST_AVAILABLE,
+            title,
+            message,
+            metadata: { productId: event.productId },
+          });
+        }
+
+        // Email notification
+        if (preferences.emailNotifications) {
+          await this.mailService.sendWaitlistAvailabilityEmail(
+            user.email,
+            user.name || 'User',
+            event.productId,
+          );
+        }
+
+        // record NOTIFY event for analytics
+        try {
+          await this.waitlistEventRepository.save(
+            this.waitlistEventRepository.create({
+              entryId: entry.id,
+              userId: entry.userId,
+              productId: event.productId,
+              type: 'NOTIFY',
+              metadata: null,
+            }),
+          );
+        } catch (e) {
+          // ignore analytics failures
+        }
+      }
+
+      // Mark entries notified
+      const ids = entries.map((e) => e.id);
+      await this.waitlistRepository
+        .createQueryBuilder()
+        .update(WaitlistEntry)
+        .set({ notifiedAt: new Date() })
+        .where('id IN (:...ids)', { ids })
+        .execute();
+    } catch (error) {
+      this.logger.error(
+        `Error handling waitlist availability for product ${event.productId}`,
         error,
       );
     }

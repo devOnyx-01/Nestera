@@ -20,6 +20,7 @@ describe('AnalyticsService', () => {
     convertXLMToUsd: jest.Mock;
     convertToUsd: jest.Mock;
     convertAQUAToUsd: jest.Mock;
+    getXLMPrice: jest.Mock<() => Promise<number>>;
   };
 
   beforeEach(async () => {
@@ -47,6 +48,7 @@ describe('AnalyticsService', () => {
       convertXLMToUsd: jest.fn(),
       convertToUsd: jest.fn(),
       convertAQUAToUsd: jest.fn(),
+      getXLMPrice: jest.fn().mockResolvedValue(0.12),
     };
 
     const module: TestingModule = await Test.createTestingModule({

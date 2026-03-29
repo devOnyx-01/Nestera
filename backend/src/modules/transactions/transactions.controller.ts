@@ -1,4 +1,13 @@
-import { Controller, Get, Query, UseGuards, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  Res,
+  Param,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { Response } from 'express';
 import {
   ApiBearerAuth,
@@ -9,6 +18,8 @@ import {
 import { TransactionsService } from './transactions.service';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
 import { TransactionResponseDto } from './dto/transaction-response.dto';
+import { TagTransactionDto } from './dto/tag-transaction.dto';
+import { BulkTagDto } from './dto/bulk-tag.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PageDto } from '../../common/dto/page.dto';
@@ -71,5 +82,24 @@ export class TransactionsController {
     );
 
     csvStream.pipe(res);
+  }
+
+  @Post(':id/tag')
+  async tagTransaction(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Body() payload: TagTransactionDto,
+  ) {
+    return this.transactionsService.tagTransaction(user.id, id, payload);
+  }
+
+  @Get('categories')
+  async getCategories(@CurrentUser() user: { id: string }) {
+    return this.transactionsService.listCategories(user.id);
+  }
+
+  @Post('tags/bulk')
+  async bulkTag(@CurrentUser() user: { id: string }, @Body() body: BulkTagDto) {
+    return this.transactionsService.bulkTag(user.id, body);
   }
 }

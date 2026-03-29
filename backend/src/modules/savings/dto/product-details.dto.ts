@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SavingsProductType, RiskLevel } from '../entities/savings-product.entity';
+import {
+  SavingsProductType,
+  RiskLevel,
+} from '../entities/savings-product.entity';
 
 /**
  * Detailed product response combining static DB attributes with live Soroban contract data

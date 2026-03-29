@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SavingsProductType, RiskLevel } from '../entities/savings-product.entity';
+import {
+  SavingsProductType,
+  RiskLevel,
+} from '../entities/savings-product.entity';
 
 export class SavingsProductDto {
   @ApiProperty({ description: 'Product UUID' })

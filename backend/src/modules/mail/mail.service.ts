@@ -99,4 +99,56 @@ export class MailService {
       );
     }
   }
+
+  async sendGoalMilestoneEmail(
+    userEmail: string,
+    name: string,
+    goalName: string,
+    percentage: number,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: userEmail,
+        subject: `Congrats — ${percentage}% of your goal achieved!`,
+        template: './goal-milestone',
+        context: {
+          name: name || 'User',
+          goalName,
+          percentage,
+        },
+      });
+      this.logger.log(
+        `Goal milestone email (${percentage}%) sent to ${userEmail}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send goal milestone email to ${userEmail}`,
+        error,
+      );
+    }
+  }
+
+  async sendWaitlistAvailabilityEmail(
+    userEmail: string,
+    name: string,
+    productId: string,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: userEmail,
+        subject: 'A savings product you waited for is available',
+        template: './waitlist-available',
+        context: {
+          name: name || 'User',
+          productId,
+        },
+      });
+      this.logger.log(`Waitlist availability email sent to ${userEmail}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send waitlist availability email to ${userEmail}`,
+        error,
+      );
+    }
+  }
 }

@@ -10,7 +10,10 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SavingsProductType, RiskLevel } from '../entities/savings-product.entity';
+import {
+  SavingsProductType,
+  RiskLevel,
+} from '../entities/savings-product.entity';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'Fixed 12-Month Plan', description: 'Product name' })

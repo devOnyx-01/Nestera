@@ -1,6 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
-import { IsOptional, IsEnum, IsDateString, IsArray } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsArray,
+  IsString,
+} from 'class-validator';
 import { PageOptionsDto } from '../../../common/dto/page-options.dto';
 import { LedgerTransactionType } from '../../blockchain/entities/transaction.entity';
 
@@ -44,4 +50,32 @@ export class TransactionQueryDto extends PageOptionsDto {
   })
   @IsOptional()
   readonly poolId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by category',
+    example: 'Groceries',
+  })
+  @IsOptional()
+  @IsString()
+  readonly category?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by tags (comma-separated or array)',
+    example: 'food,groceries',
+    isArray: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+    }
+    return Array.isArray(value) ? value : undefined;
+  })
+  @IsArray()
+  @IsString({ each: true })
+  readonly tags?: string[];
 }

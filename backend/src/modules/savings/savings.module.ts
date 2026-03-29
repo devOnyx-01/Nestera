@@ -10,6 +10,10 @@ import { UserSubscription } from './entities/user-subscription.entity';
 import { SavingsGoal } from './entities/savings-goal.entity';
 import { InterestHistory } from './entities/interest-history.entity';
 import { User } from '../user/entities/user.entity';
+import { WaitlistEntry } from './entities/waitlist-entry.entity';
+import { WaitlistEvent } from './entities/waitlist-event.entity';
+import { WaitlistService } from './waitlist.service';
+import { WaitlistController } from './waitlist.controller';
 
 @Module({
   imports: [
@@ -20,10 +24,12 @@ import { User } from '../user/entities/user.entity';
       SavingsGoal,
       InterestHistory,
       User,
+      WaitlistEntry,
+      WaitlistEvent,
     ]),
   ],
-  controllers: [SavingsController],
-  providers: [SavingsService, PredictiveEvaluatorService, InterestCalculationService],
-  exports: [SavingsService],
+  controllers: [SavingsController, WaitlistController],
+  providers: [SavingsService, PredictiveEvaluatorService, WaitlistService],
+  exports: [SavingsService, WaitlistService],
 })
 export class SavingsModule {}

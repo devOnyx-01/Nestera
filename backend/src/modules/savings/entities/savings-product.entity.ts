@@ -51,6 +51,9 @@ export class SavingsProduct {
   @Column('decimal', { precision: 14, scale: 2, default: 0 })
   tvlAmount: number;
 
+  @Column('int', { nullable: true })
+  capacity: number | null;
+
   @Column({ default: true })
   isActive: boolean;
 

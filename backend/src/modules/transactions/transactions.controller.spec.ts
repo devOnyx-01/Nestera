@@ -14,6 +14,9 @@ describe('TransactionsController', () => {
 
   const mockTransactionsService = {
     findAllForUser: jest.fn(),
+    tagTransaction: jest.fn(),
+    listCategories: jest.fn(),
+    bulkTag: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -118,6 +121,50 @@ describe('TransactionsController', () => {
         mockUser.id,
         queryDto,
       );
+    });
+
+    it('should call tagTransaction on POST /:id/tag', async () => {
+      const payload = { tags: ['food'], category: 'Groceries', action: 'add' };
+      mockTransactionsService.tagTransaction.mockResolvedValue({ ok: true });
+
+      const res = await controller.tagTransaction(
+        mockUser,
+        'tx-1',
+        payload as any,
+      );
+
+      expect(service.tagTransaction).toHaveBeenCalledWith(
+        mockUser.id,
+        'tx-1',
+        payload,
+      );
+      expect(res).toEqual({ ok: true });
+    });
+
+    it('should return categories from GET /categories', async () => {
+      mockTransactionsService.listCategories.mockResolvedValue([
+        'Groceries',
+        'Transport',
+      ]);
+
+      const res = await controller.getCategories(mockUser);
+
+      expect(service.listCategories).toHaveBeenCalledWith(mockUser.id);
+      expect(res).toEqual(['Groceries', 'Transport']);
+    });
+
+    it('should call bulkTag on POST /tags/bulk', async () => {
+      const body = {
+        ids: ['tx-1', 'tx-2'],
+        tags: ['food'],
+        category: 'Groceries',
+      };
+      mockTransactionsService.bulkTag.mockResolvedValue({ ok: true, count: 2 });
+
+      const res = await controller.bulkTag(mockUser, body as any);
+
+      expect(service.bulkTag).toHaveBeenCalledWith(mockUser.id, body);
+      expect(res).toEqual({ ok: true, count: 2 });
     });
   });
 });

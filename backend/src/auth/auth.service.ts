@@ -50,8 +50,23 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if 2FA is enabled
+    const fullUser = await this.userService.findByEmail(dto.email);
+    if (fullUser?.twoFactorEnabled) {
+      return {
+        requiresTwoFactor: true,
+        userId: user.id,
+        message: 'Please provide your 2FA token',
+      };
+    }
+
     return {
-      accessToken: this.generateToken(user.id, user.email, user.role),
+      accessToken: this.generateToken(
+        user.id,
+        user.email,
+        user.role,
+        user.kycStatus,
+      ),
     };
   }
 
@@ -64,8 +79,13 @@ export class AuthService {
     return null;
   }
 
-  private generateToken(userId: string, email: string, role = 'USER') {
-    return this.jwtService.sign({ sub: userId, email, role });
+  private generateToken(
+    userId: string,
+    email: string,
+    role = 'USER',
+    kycStatus = 'NOT_SUBMITTED',
+  ) {
+    return this.jwtService.sign({ sub: userId, email, role, kycStatus });
   }
 
   async generateNonce(publicKey: string): Promise<{ nonce: string }> {

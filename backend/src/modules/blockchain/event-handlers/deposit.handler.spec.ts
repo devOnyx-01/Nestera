@@ -3,9 +3,15 @@ import { DataSource } from 'typeorm';
 import { xdr, nativeToScVal } from '@stellar/stellar-sdk';
 import { createHash } from 'crypto';
 import { DepositHandler } from './deposit.handler';
-import { UserSubscription, SubscriptionStatus } from '../../savings/entities/user-subscription.entity';
+import {
+  UserSubscription,
+  SubscriptionStatus,
+} from '../../savings/entities/user-subscription.entity';
 import { User } from '../../user/entities/user.entity';
-import { LedgerTransaction, LedgerTransactionType } from '../entities/transaction.entity';
+import {
+  LedgerTransaction,
+  LedgerTransactionType,
+} from '../entities/transaction.entity';
 import { SavingsProduct } from '../../savings/entities/savings-product.entity';
 
 describe('DepositHandler', () => {
@@ -62,7 +68,11 @@ describe('DepositHandler', () => {
   });
 
   describe('handle', () => {
-    const mockUser = { id: 'user-id', publicKey: 'G...', defaultSavingsProductId: 'prod-id' };
+    const mockUser = {
+      id: 'user-id',
+      publicKey: 'G...',
+      defaultSavingsProductId: 'prod-id',
+    };
     const mockProduct = { id: 'prod-id', isActive: true };
     const mockEvent = {
       id: 'event-1',
@@ -86,18 +96,26 @@ describe('DepositHandler', () => {
     it('should process deposit successfully and update subscription', async () => {
       userRepo.findOne.mockResolvedValue(mockUser);
       txRepo.findOne.mockResolvedValue(null);
-      subRepo.findOne.mockResolvedValue({ userId: 'user-id', amount: 1000, status: SubscriptionStatus.ACTIVE });
+      subRepo.findOne.mockResolvedValue({
+        userId: 'user-id',
+        amount: 1000,
+        status: SubscriptionStatus.ACTIVE,
+      });
 
       const result = await handler.handle(mockEvent);
 
       expect(result).toBe(true);
-      expect(txRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-        type: LedgerTransactionType.DEPOSIT,
-        amount: '500',
-      }));
-      expect(subRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-        amount: 1500,
-      }));
+      expect(txRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: LedgerTransactionType.DEPOSIT,
+          amount: '500',
+        }),
+      );
+      expect(subRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: 1500,
+        }),
+      );
     });
 
     it('should create new subscription if one does not exist', async () => {
@@ -110,9 +128,11 @@ describe('DepositHandler', () => {
 
       expect(result).toBe(true);
       expect(subRepo.create).toHaveBeenCalled();
-      expect(subRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-        amount: 500,
-      }));
+      expect(subRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: 500,
+        }),
+      );
     });
 
     it('should match topic by symbol', async () => {
@@ -121,7 +141,11 @@ describe('DepositHandler', () => {
         topic: [nativeToScVal('Deposit', { type: 'symbol' }).toXDR('base64')],
       };
       userRepo.findOne.mockResolvedValue(mockUser);
-      subRepo.findOne.mockResolvedValue({ userId: 'user-id', amount: 100, status: SubscriptionStatus.ACTIVE });
+      subRepo.findOne.mockResolvedValue({
+        userId: 'user-id',
+        amount: 100,
+        status: SubscriptionStatus.ACTIVE,
+      });
 
       const result = await handler.handle(symbolEvent);
       expect(result).toBe(true);
@@ -130,7 +154,9 @@ describe('DepositHandler', () => {
 
     it('should throw error if user not found', async () => {
       userRepo.findOne.mockResolvedValue(null);
-      await expect(handler.handle(mockEvent)).rejects.toThrow('Cannot map deposit payload publicKey to user');
+      await expect(handler.handle(mockEvent)).rejects.toThrow(
+        'Cannot map deposit payload publicKey to user',
+      );
     });
   });
 });

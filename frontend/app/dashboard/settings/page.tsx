@@ -1,9 +1,60 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Settings } from "lucide-react";
 
 export const metadata = { title: "Settings – Nestera" };
 
+type Prefs = {
+  emailNotifications?: boolean;
+  inAppNotifications?: boolean;
+  sweepNotifications?: boolean;
+  claimNotifications?: boolean;
+  yieldNotifications?: boolean;
+  milestoneNotifications?: boolean;
+};
+
 export default function SettingsPage() {
+  const [prefs, setPrefs] = useState<Prefs | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/notifications/preferences", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPrefs(data);
+        }
+      } catch (e) {
+        // ignore for now
+      }
+    };
+    load();
+  }, []);
+
+  const toggle = (key: keyof Prefs) => {
+    setPrefs((p) => (p ? { ...p, [key]: !p[key] } : p));
+  };
+
+  const save = async () => {
+    if (!prefs) return;
+    setSaving(true);
+    try {
+      await fetch("/notifications/preferences", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prefs),
+      });
+    } catch (e) {
+      // ignore
+    }
+    setSaving(false);
+  };
+
   return (
     <div className="w-full">
       <div className="flex items-center gap-3 mb-6">
@@ -18,10 +69,64 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-linear-to-b from-[rgba(6,18,20,0.45)] to-[rgba(4,12,14,0.35)] border border-[rgba(8,120,120,0.06)] rounded-2xl p-8 text-center">
-        <p className="text-[#5e8c96] text-sm">
-          Account settings will appear here.
-        </p>
+      <div className="bg-linear-to-b from-[rgba(6,18,20,0.45)] to-[rgba(4,12,14,0.35)] border border-[rgba(8,120,120,0.06)] rounded-2xl p-8">
+        <h2 className="text-lg font-semibold text-white mb-4">Notifications</h2>
+        <div className="flex flex-col gap-4 text-left max-w-xl mx-auto">
+          <label className="flex items-center justify-between">
+            <div>
+              <div className="text-white font-medium">Email Notifications</div>
+              <div className="text-sm text-[#5e8c96]">
+                Receive emails about important account events
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={!!prefs?.emailNotifications}
+              onChange={() => toggle("emailNotifications")}
+            />
+          </label>
+
+          <label className="flex items-center justify-between">
+            <div>
+              <div className="text-white font-medium">In-app Notifications</div>
+              <div className="text-sm text-[#5e8c96]">
+                Show notifications inside the app
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={!!prefs?.inAppNotifications}
+              onChange={() => toggle("inAppNotifications")}
+            />
+          </label>
+
+          <label className="flex items-center justify-between">
+            <div>
+              <div className="text-white font-medium">
+                Goal Milestone Notifications
+              </div>
+              <div className="text-sm text-[#5e8c96]">
+                Receive celebratory messages when goals reach 25%, 50%, 75%, and
+                100%
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={!!prefs?.milestoneNotifications}
+              onChange={() => toggle("milestoneNotifications")}
+            />
+          </label>
+
+          <div className="text-right">
+            <button
+              className="px-4 py-2 rounded bg-[#06b6b6] text-black font-semibold"
+              onClick={save}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Preferences"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

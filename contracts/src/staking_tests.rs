@@ -14,7 +14,6 @@ fn setup_env_with_staking(config: StakingConfig) -> (Env, NesteraContractClient<
     let admin = Address::generate(&env);
     let admin_pk = BytesN::from_array(&env, &[9u8; 32]);
 
-
     // Set initial ledger timestamp to non-zero value
 
     client.initialize(&admin, &admin_pk);

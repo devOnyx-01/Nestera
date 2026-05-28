@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -303,7 +303,9 @@ export class BackupService {
     const expired = await this.backupRepo
       .createQueryBuilder('b')
       .where('b.expiresAt < :now', { now: new Date() })
-      .andWhere('b.status = :status', { status: BackupStatus.SUCCESS })
+      .andWhere('b.status IN (:...statuses)', {
+        statuses: [BackupStatus.SUCCESS, BackupStatus.RESTORE_TEST_PASSED],
+      })
       .getMany();
 
     for (const record of expired) {
@@ -330,7 +332,9 @@ export class BackupService {
 
   async getLastSuccessful(): Promise<BackupRecord | null> {
     return this.backupRepo.findOne({
-      where: { status: BackupStatus.SUCCESS },
+      where: {
+        status: In([BackupStatus.SUCCESS, BackupStatus.RESTORE_TEST_PASSED]),
+      },
       order: { createdAt: 'DESC' },
     });
   }
@@ -392,30 +396,20 @@ export class BackupService {
   }
 
   private async decrypt(inputFile: string, outputFile: string): Promise<void> {
-    const input = fs.createReadStream(inputFile);
-    const output = fs.createWriteStream(outputFile);
-
-    // Read IV from file
     const iv = Buffer.alloc(16);
     const fd = fs.openSync(inputFile, 'r');
     fs.readSync(fd, iv, 0, 16, 0);
     fs.closeSync(fd);
 
+    const input = fs.createReadStream(inputFile, { start: 16 });
     const decipher = crypto.createDecipheriv(
       'aes-256-cbc',
       this.encryptionKey,
       iv,
     );
+    const output = fs.createWriteStream(outputFile);
 
-    input.on('data', (chunk) => {
-      if (input.bytesRead === 16) {
-        // Skip the IV bytes on first read
-        return;
-      }
-      decipher.write(chunk);
-    });
-
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       input.pipe(decipher).pipe(output);
       output.on('finish', resolve);
       output.on('error', reject);

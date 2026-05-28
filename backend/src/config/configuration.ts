@@ -62,6 +62,13 @@ export default () => ({
     encryptionKey: process.env.BACKUP_ENCRYPTION_KEY, // 64 hex chars = 32 bytes
     retentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS ?? '30', 10),
     tmpDir: process.env.BACKUP_TMP_DIR ?? '/tmp',
+    testDb: {
+      host: process.env.BACKUP_TEST_DB_HOST,
+      port: parseInt(process.env.BACKUP_TEST_DB_PORT || '5432', 10),
+      user: process.env.BACKUP_TEST_DB_USER,
+      password: process.env.BACKUP_TEST_DB_PASSWORD,
+      name: process.env.BACKUP_TEST_DB_NAME || 'nestera_restore_test',
+    },
   },
   hospital: {
     endpoints: {

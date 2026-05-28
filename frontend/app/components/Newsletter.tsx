@@ -8,8 +8,8 @@ const Newsletter: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      console.log("Newsletter signup:", email);
-      // Here you would typically send the email to your backend
+      // TODO: Implement newsletter subscription
+      // Send the email to your backend API
       setEmail("");
     }
   };

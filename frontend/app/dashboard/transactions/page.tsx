@@ -202,7 +202,9 @@ export default function TransactionHistoryPage() {
                   amountDisplay={t.amountDisplay}
                   isPositive={t.isPositive}
                   status={t.status}
-                  onClick={(id) => console.log("Open transaction", id)}
+                  onClick={(id) => {
+                    // TODO: Implement transaction details modal
+                  }}
                 />
               ))}
 

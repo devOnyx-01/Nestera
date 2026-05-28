@@ -9,6 +9,8 @@ import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { AuthController } from './auth.controller';
 import { User } from '../modules/user/entities/user.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { Session } from './entities/session.entity';
 import { CacheModule } from '../modules/cache/cache.module';
 import { CacheStrategyService } from '../modules/cache/cache-strategy.service';
 import { AuthRateLimitService } from './services/auth-rate-limit.service';
@@ -18,7 +20,7 @@ import { AuthSecurityAdminController } from './controllers/auth-security-admin.c
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, RefreshToken, Session]),
     CacheModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

@@ -18,6 +18,7 @@ pub struct Config {
     pub withdrawal_fee_bps: u32,
     pub performance_fee_bps: u32,
     pub paused: bool,
+    pub upgrade_delay: u64,
 }
 
 // ========== Admin Verification ==========
@@ -63,6 +64,7 @@ pub fn initialize_config(
     deposit_fee_bps: u32,
     withdrawal_fee_bps: u32,
     performance_fee_bps: u32,
+    upgrade_delay: u64,
 ) -> Result<(), SavingsError> {
     // Prevent re-initialization
     let already_init: bool = env
@@ -100,13 +102,16 @@ pub fn initialize_config(
         .set(&DataKey::PerformanceFeeBps, &performance_fee_bps);
     env.storage()
         .instance()
+        .set(&DataKey::NextTimelockId, &1u64); // Initialize timelock counter
+    env.storage()
+        .instance()
         .set(&DataKey::ConfigInitialized, &true);
 
     // Initialize the treasury struct with default zero values
     crate::treasury::initialize_treasury(env);
 
     env.events()
-        .publish((symbol_short!("cfg_init"),), performance_fee_bps);
+        .publish((), crate::events::ProtocolEvent::CfgInit(performance_fee_bps));
 
     Ok(())
 }
@@ -166,6 +171,7 @@ pub fn get_config(env: &Env) -> Result<Config, SavingsError> {
         withdrawal_fee_bps,
         performance_fee_bps,
         paused,
+        upgrade_delay: 86400 * 2, // 2 days default
     })
 }
 
@@ -186,7 +192,7 @@ pub fn set_treasury(env: &Env, admin: Address, new_treasury: Address) -> Result<
         .set(&DataKey::TreasuryAddress, &new_treasury);
 
     env.events()
-        .publish((symbol_short!("set_trs"),), new_treasury);
+        .publish((), crate::events::ProtocolEvent::SetTreasury(new_treasury));
 
     Ok(())
 }
@@ -225,7 +231,7 @@ pub fn set_fees(
         .set(&DataKey::PerformanceFeeBps, &performance_fee);
 
     env.events()
-        .publish((symbol_short!("set_fee"),), performance_fee);
+        .publish((), crate::events::ProtocolEvent::SetFees(performance_fee));
 
     Ok(())
 }
@@ -243,7 +249,8 @@ pub fn pause_contract(env: &Env, admin: Address) -> Result<(), SavingsError> {
 
     env.storage().persistent().set(&DataKey::Paused, &true);
 
-    env.events().publish((symbol_short!("pause"),), admin);
+    env.events()
+        .publish((), crate::events::ProtocolEvent::CfgPause(admin));
 
     Ok(())
 }
@@ -261,7 +268,8 @@ pub fn unpause_contract(env: &Env, admin: Address) -> Result<(), SavingsError> {
 
     env.storage().persistent().set(&DataKey::Paused, &false);
 
-    env.events().publish((symbol_short!("unpause"),), admin);
+    env.events()
+        .publish((), crate::events::ProtocolEvent::CfgUnpause(admin));
 
     Ok(())
 }

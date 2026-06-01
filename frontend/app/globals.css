@@ -241,3 +241,19 @@ body {
     animation: none;
   }
 }
+
+/* Dark-mode image utilities */
+[data-theme="dark"] .img-invert-on-dark,
+.dark .img-invert-on-dark {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+[data-theme="dark"] .img-dim-on-dark,
+.dark .img-dim-on-dark {
+  filter: brightness(0.85) saturate(0.9);
+}
+
+/* Keyboard shortcut badge */
+kbd {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}

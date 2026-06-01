@@ -8,6 +8,7 @@ import {
   Copy,
   ExternalLink,
   HelpCircle,
+  Keyboard,
   LogOut,
   Search,
   Wallet,
@@ -132,6 +133,17 @@ const TopNav: React.FC = () => {
                   <Icon size={16} />
                 </button>
               ))}
+              <button
+                aria-label="Keyboard shortcuts (?)"
+                title="Keyboard shortcuts (?)"
+                className={actionButtonClass}
+                onClick={() => {
+                  const e = new KeyboardEvent("keydown", { key: "?", bubbles: true });
+                  document.dispatchEvent(e);
+                }}
+              >
+                <Keyboard size={16} />
+              </button>
             </div>
           </div>
 

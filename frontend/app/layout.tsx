@@ -6,6 +6,7 @@ import { WalletProvider } from "./context/WalletContext";
 import { ToastProvider } from "./context/ToastContext";
 import QueryProvider from "./providers/QueryProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
+import KeyboardShortcutsProvider from "./providers/KeyboardShortcutsProvider";
 
 const BASE_URL = "https://nestera.app";
 
@@ -59,7 +60,9 @@ export default function RootLayout({
           <ThemeProvider>
             <WalletProvider>
               <ToastProvider>
-                <main id="main-content">{children}</main>
+                <KeyboardShortcutsProvider>
+                  <main id="main-content">{children}</main>
+                </KeyboardShortcutsProvider>
               </ToastProvider>
             </WalletProvider>
           </ThemeProvider>

@@ -15,16 +15,38 @@ import {
   Home,
   Airplay,
   ShoppingBag,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import GoalCard, { GoalStatus } from "./components/GoalCard";
 import Button from "../components/ui/Button";
+import { useUndoRedo } from "../hooks/useUndoRedo";
+import { useToast } from "../context/ToastContext";
+
+type FilterState = { searchQuery: string; statusFilter: string; sortBy: string };
 
 // export const metadata = { title: "Goal-Based Savings - Nestera" };
 
 export default function GoalBasedSavingsPage() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState("All");
-  const [sortBy, setSortBy] = React.useState("Progress");
+  const toast = useToast();
+  const { state: filters, addToHistory, undo, redo, canUndo, canRedo } = useUndoRedo<FilterState>({
+    searchQuery: "",
+    statusFilter: "All",
+    sortBy: "Progress",
+  });
+  const { searchQuery, statusFilter, sortBy } = filters;
+
+  const setFilter = (patch: Partial<FilterState>) => addToHistory({ ...filters, ...patch });
+
+  const handleUndo = () => {
+    undo();
+    toast.info("Undone", "Filter change undone");
+  };
+  const handleRedo = () => {
+    redo();
+    toast.info("Redone", "Filter change redone");
+  };
+
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const goals = [
     {
@@ -103,7 +125,7 @@ export default function GoalBasedSavingsPage() {
         : b.progressPercent - a.progressPercent,
     );
     return filtered;
-  }, [goals, searchQuery, sortBy, statusFilter]);
+  }, [searchQuery, sortBy, statusFilter]);
 
   return (
     <section className="min-h-screen w-full bg-[#0b1f20]">
@@ -226,9 +248,9 @@ export default function GoalBasedSavingsPage() {
               size={18}
             />
             <input
-              type="text"
+              type="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setFilter({ searchQuery: e.target.value })}
               placeholder="Search goals..."
               className="w-full bg-[#0e2330] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-[#4e7a86] focus:outline-hidden focus:border-cyan-500/50 transition-colors"
             />
@@ -236,7 +258,7 @@ export default function GoalBasedSavingsPage() {
           <div className="flex flex-wrap items-center gap-3">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => setFilter({ statusFilter: e.target.value })}
               className="px-4 py-3 rounded-xl border bg-[#0e2330] border-white/5 text-[#d3ecef] text-sm focus:outline-hidden"
             >
               <option value="All">Status: All</option>
@@ -247,13 +269,13 @@ export default function GoalBasedSavingsPage() {
             </select>
             <button
               type="button"
-              onClick={() => setSortBy(sortBy === "Progress" ? "Target" : "Progress")}
+              onClick={() => setFilter({ sortBy: sortBy === "Progress" ? "Target" : "Progress" })}
               className="flex items-center gap-2 px-4 py-3 rounded-xl border bg-[#0e2330] border-white/5 text-[#d3ecef] text-sm"
             >
               Sort: {sortBy}
               <ChevronDown size={14} className="opacity-70" />
             </button>
-<div className="flex bg-[#0e2330] p-1 rounded-xl border border-white/5" role="group" aria-label="View mode toggle">
+            <div className="flex bg-[#0e2330] p-1 rounded-xl border border-white/5" role="group" aria-label="View mode toggle">
                <button
                  type="button"
                  onClick={() => setViewMode("grid")}
@@ -279,6 +301,29 @@ export default function GoalBasedSavingsPage() {
                  <List size={18} />
                </button>
              </div>
+            {/* Undo / Redo */}
+            <div className="flex gap-1" role="group" aria-label="Undo redo filters">
+              <button
+                type="button"
+                onClick={handleUndo}
+                disabled={!canUndo}
+                aria-label="Undo filter change (Ctrl+Z)"
+                title="Undo (Ctrl+Z)"
+                className="p-2 rounded-xl border bg-[#0e2330] border-white/5 text-[#5e8c96] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Undo2 size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={handleRedo}
+                disabled={!canRedo}
+                aria-label="Redo filter change (Ctrl+Shift+Z)"
+                title="Redo (Ctrl+Shift+Z)"
+                className="p-2 rounded-xl border bg-[#0e2330] border-white/5 text-[#5e8c96] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Redo2 size={16} />
+              </button>
+            </div>
           </div>
         </div>
 

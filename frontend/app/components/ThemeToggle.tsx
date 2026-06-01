@@ -45,11 +45,11 @@ export default function ThemeToggle({
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
+    if (!isOpen) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {
@@ -57,20 +57,32 @@ export default function ThemeToggle({
       }
     };
 
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
     document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
+    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isOpen]);
+
+  // Arrow-key navigation inside the open menu
+  const handleMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]') ?? []
+    );
+    const focused = document.activeElement as HTMLElement;
+    const idx = items.indexOf(focused as HTMLButtonElement);
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      items[(idx + 1) % items.length]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(idx - 1 + items.length) % items.length]?.focus();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    } else if (e.key === "Tab") {
+      setIsOpen(false);
+    }
+  };
 
   const activeOption = useMemo(
     () => themeOptions.find((option) => option.value === theme) ?? themeOptions[2],
@@ -83,8 +95,12 @@ export default function ThemeToggle({
   return (
     <div ref={containerRef} className={clsx("relative", className)}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((current) => !current)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); setIsOpen(true); }
+        }}
         aria-label={`Theme: ${activeOption.label}`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
@@ -114,14 +130,16 @@ export default function ThemeToggle({
 
       {isOpen ? (
         <div
+          ref={menuRef}
           role="menu"
           aria-label="Theme selector"
+          onKeyDown={handleMenuKeyDown}
           className={clsx(
             "absolute z-50 mt-2 min-w-[220px] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-strong)] p-1.5 shadow-xl",
             compact ? "right-0" : "left-0"
           )}
         >
-          {themeOptions.map(({ value, label, description, Icon }) => {
+          {themeOptions.map(({ value, label, description, Icon }, i) => {
             const selected = theme === value;
 
             return (
@@ -130,9 +148,11 @@ export default function ThemeToggle({
                 type="button"
                 role="menuitemradio"
                 aria-checked={selected}
+                tabIndex={i === 0 ? 0 : -1}
                 onClick={() => {
                   setTheme(value);
                   setIsOpen(false);
+                  triggerRef.current?.focus();
                 }}
                 className={clsx(
                   "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-inset",

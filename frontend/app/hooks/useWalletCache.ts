@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { env } from "../lib/env";
+import { apiRequest, rateLimitedFetch } from "../lib/api-client";
 
 interface Balance {
   asset_code: string;
@@ -19,7 +20,7 @@ const COINGECKO_IDS: Record<string, string> = {
 
 async function fetchPrices(): Promise<Record<string, number>> {
   const ids = Object.values(COINGECKO_IDS).join(",");
-  const res = await fetch(`${env.coingeckoApi}/simple/price?ids=${ids}&vs_currencies=usd`);
+  const res = await rateLimitedFetch(`${env.coingeckoApi}/simple/price?ids=${ids}&vs_currencies=usd`);
 
   if (!res.ok) {
     throw new Error("Failed to fetch prices");
@@ -36,7 +37,7 @@ async function fetchPrices(): Promise<Record<string, number>> {
 }
 
 async function fetchBalances(address: string, horizonUrl: string): Promise<Balance[]> {
-  const res = await fetch(`${horizonUrl.replace(/\/$/, "")}/accounts/${address}`);
+  const res = await rateLimitedFetch(`${horizonUrl.replace(/\/$/, "")}/accounts/${address}`);
 
   if (!res.ok) {
     throw new Error("Failed to fetch wallet balances");

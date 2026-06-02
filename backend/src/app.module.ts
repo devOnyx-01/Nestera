@@ -1,4 +1,5 @@
-import { Module, MiddlewareConsumer } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -46,7 +47,7 @@ import { ConnectionPoolModule } from './common/database/connection-pool.module';
 import { CircuitBreakerModule } from './common/circuit-breaker/circuit-breaker.module';
 import { PostmanModule } from './common/postman/postman.module';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
-import { PerformanceModule } from './modules/performance/performance.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 import { GracefulShutdownService } from './common/services/graceful-shutdown.service';
 
 const envValidationSchema = Joi.object({
@@ -114,7 +115,15 @@ const envValidationSchema = Joi.object({
         };
       },
     }),
-    ConfigModule.forRoot({
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        redis: {
+          uri: config.get<string>('REDIS_URL') || 'redis://localhost:6379',
+        },
+      }),
+    }),
       isGlobal: true,
       load: [configuration],
       validationSchema: envValidationSchema,

@@ -11,7 +11,8 @@ import {
   UserSubscription,
   SubscriptionStatus,
 } from '../savings/entities/user-subscription.entity';
-import { MailService } from '../mail/mail.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bullmq';
 import {
   BroadcastNotificationDto,
   ScheduleNotificationDto,
@@ -35,11 +36,13 @@ export class AdminNotificationsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(UserSubscription)
     private readonly subscriptionRepository: Repository<UserSubscription>,
+    @InjectQueue('notifications')
+    private readonly notificationQueue: Queue,
     private readonly mailService: MailService,
   ) {}
 
   /**
-   * Send broadcast notification to all users or targeted users
+   * Send broadcast notification to all users or targeted users via job queue
    */
   async broadcastNotification(
     dto: BroadcastNotificationDto,

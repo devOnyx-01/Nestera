@@ -18,6 +18,7 @@ import {
   DeliveryStatus,
 } from './entities/webhook-delivery.entity';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
+import { UpdateWebhookDto } from './dto/update-webhook.dto';
 
 /** Exponential back-off delays in minutes: 1, 5, 30, 120 */
 const RETRY_DELAYS_MINUTES = [1, 5, 30, 120];
@@ -62,9 +63,25 @@ export class WebhookService {
     await this.subRepo.remove(sub);
   }
 
+  async update(
+    id: string,
+    userId: string,
+    dto: UpdateWebhookDto,
+  ): Promise<WebhookSubscription> {
+    const sub = await this.findOne(id, userId);
+    Object.assign(sub, dto);
+    return this.subRepo.save(sub);
+  }
+
   async disable(id: string, userId: string): Promise<WebhookSubscription> {
     const sub = await this.findOne(id, userId);
     sub.status = WebhookStatus.DISABLED;
+    return this.subRepo.save(sub);
+  }
+
+  async enable(id: string, userId: string): Promise<WebhookSubscription> {
+    const sub = await this.findOne(id, userId);
+    sub.status = WebhookStatus.ACTIVE;
     return this.subRepo.save(sub);
   }
 

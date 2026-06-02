@@ -13,6 +13,7 @@ import React, {
 import { usePrices, getAssetPrice } from "../hooks/usePrices";
 import { env } from "../lib/env";
 import { queryClient } from "./QueryProvider";
+import { rateLimitedFetch } from "../lib/api-client";
 
 interface Balance {
   asset_code: string;
@@ -127,7 +128,7 @@ const refreshInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
     try {
       const horizonUrl = getHorizonUrl(state.network).replace(/\/$/, "");
-      const res = await fetch(`${horizonUrl}/accounts/${state.address}`);
+      const res = await rateLimitedFetch(`${horizonUrl}/accounts/${state.address}`);
       if (!res.ok) {
         throw new Error("Unable to refresh wallet balances.");
       }

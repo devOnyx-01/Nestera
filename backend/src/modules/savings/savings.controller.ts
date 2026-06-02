@@ -54,6 +54,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RpcThrottleGuard } from '../../common/guards/rpc-throttle.guard';
 import { RecommendationService } from './services/recommendation.service';
 import { AutoDepositService } from './services/auto-deposit.service';
+import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
 import {
   CreateAutoDepositDto,
   AutoDepositResponseDto,
@@ -207,6 +208,7 @@ export class SavingsController {
 
   @Post('subscribe')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(IdempotencyInterceptor)
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Subscribe to a savings product' })
@@ -231,6 +233,7 @@ export class SavingsController {
 
   @Post('withdraw')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(IdempotencyInterceptor)
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
@@ -309,6 +312,7 @@ export class SavingsController {
 
   @Post('goals')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(IdempotencyInterceptor)
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new savings goal' })
@@ -455,6 +459,7 @@ export class SavingsController {
 
   @Post('auto-deposit/create')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(IdempotencyInterceptor)
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a recurring auto-deposit schedule' })

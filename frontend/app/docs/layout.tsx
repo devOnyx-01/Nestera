@@ -1,21 +1,21 @@
-'use client';
-
+import { Metadata } from 'next';
 import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { generatePageMetadata, SITE_URL } from '../lib/seo';
+import DocsLayoutClient from './layout-client';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Documentation | Nestera',
+  description:
+    'Learn how to use Nestera, integrate with smart contracts, and manage your decentralized savings accounts.',
+  url: '/docs',
+  canonical: `${SITE_URL}/docs`,
+});
 
 export default function DocsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen bg-[#061a1a] flex flex-col">
-      <Navbar />
-      <div className="flex-1 w-full max-w-[1400px] mx-auto px-6 md:px-12 py-12">
-        {children}
-      </div>
-      <Footer />
-    </div>
-  );
+  return <DocsLayoutClient>{children}</DocsLayoutClient>;
 }
+

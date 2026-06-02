@@ -1,10 +1,16 @@
 import React from "react";
+import type { Metadata } from "next";
 import Sidebar from "../components/dashboard/Sidebar";
 import TopNav from "../components/dashboard/TopNav";
+import { generatePageMetadata, SITE_URL } from "../lib/seo";
 
-export const metadata = {
+export const metadata: Metadata = generatePageMetadata({
   title: "Dashboard - Nestera",
-};
+  description: "Manage your Nestera account, view portfolio analytics, track savings progress, and control your decentralized financial strategy from one unified dashboard.",
+  url: "/dashboard",
+  canonical: `${SITE_URL}/dashboard`,
+  noindex: true,
+});
 
 export default function DashboardLayout({
   children,

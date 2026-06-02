@@ -8,8 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-// Import WebSocket hook
-
+import { useWalletWebSocket } from "../hooks/useWalletWebSocket";
 import { usePrices, getAssetPrice } from "../hooks/usePrices";
 import { env } from "../lib/env";
 import { queryClient } from "./QueryProvider";
@@ -252,7 +251,7 @@ const refreshInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   // Sync WebSocket balances to state
   useEffect(() => {
     if (wsBalances && wsBalances.length > 0) {
-      const totalUsd = wsBalances.reduce((acc, b) => acc + b.usd_value, 0);
+      const totalUsd = wsBalances.reduce((acc: number, b: { usd_value: number }) => acc + b.usd_value, 0);
       setState((s) => ({
         ...s,
         balances: wsBalances,

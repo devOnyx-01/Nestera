@@ -1,5 +1,8 @@
 "use client";
 
+import React, { useState } from "react";
+import { Button } from "@/app/components/ui/Button";
+import { ResponsiveTable, TableColumn } from "@/app/components/ui/ResponsiveTable";
 import React from "react";
 import { Briefcase, TrendingUp, Download, FileJson, FileText, MoreHorizontal } from "lucide-react";
 import { useExport } from "@/app/hooks/useExport";
@@ -124,39 +127,62 @@ export default function PortfolioPage() {
       {/* Asset breakdown */}
       <div className="rounded-2xl border border-[rgba(8,120,120,0.12)] bg-gradient-to-b from-[rgba(6,18,20,0.55)] to-[rgba(4,12,14,0.45)] p-5">
         <h2 className="text-base font-semibold text-white mb-4">Asset Breakdown</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-[#4a7080] border-b border-white/5">
-                <th className="pb-3 font-medium">Asset</th>
-                <th className="pb-3 font-medium">Type</th>
-                <th className="pb-3 font-medium text-right">Value</th>
-                <th className="pb-3 font-medium text-right">APY</th>
-                <th className="pb-3 font-medium text-right">P&amp;L</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ASSETS.map((a) => (
-                <tr key={a.name} className="border-b border-white/3 last:border-0">
-                  <td className="py-3 text-white font-medium">{a.name}</td>
-                  <td className="py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_COLORS[a.type]}`}>
-                      {a.type}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right text-[#c8e8e8]">${a.value.toLocaleString()}</td>
-                  <td className="py-3 text-right text-cyan-300">{a.apy}%</td>
-                  <td className="py-3 text-right">
-                    <span className="flex items-center justify-end gap-1 text-emerald-300">
-                      <TrendingUp size={13} />
-                      +${a.pnl} ({a.pnlPct}%)
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          items={ASSETS}
+          columns={[
+            { key: "name", label: "Asset", sortable: true, width: "30%" },
+            { key: "type", label: "Type", sortable: true, width: "18%" },
+            { key: "value", label: "Value", sortable: true, width: "16%", align: "right" },
+            { key: "apy", label: "APY", sortable: true, width: "16%", align: "right" },
+            { key: "pnl", label: "P&L", sortable: true, width: "20%", align: "right" },
+          ]}
+          rowKey={(asset) => asset.name}
+          pageSize={4}
+          showColumnVisibility={true}
+          initialSortKey="value"
+          renderDesktopHeader={(visibleColumns) => (
+            <div className="grid grid-cols-[2.2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-3 border-b border-white/10 text-[#4a7080] text-xs uppercase tracking-widest">
+              {visibleColumns.includes("name") && <div>Asset</div>}
+              {visibleColumns.includes("type") && <div>Type</div>}
+              {visibleColumns.includes("value") && <div className="text-right">Value</div>}
+              {visibleColumns.includes("apy") && <div className="text-right">APY</div>}
+              {visibleColumns.includes("pnl") && <div className="text-right">P&L</div>}
+            </div>
+          )}
+          renderDesktopRow={(asset) => (
+            <div className="grid grid-cols-[2.2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-4 border-b border-white/10 items-center text-sm text-[#d5f1f1]">
+              <div className="font-medium text-white">{asset.name}</div>
+              <div>
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${TYPE_COLORS[asset.type]}`}>
+                  {asset.type}
+                </span>
+              </div>
+              <div className="text-right">${asset.value.toLocaleString()}</div>
+              <div className="text-right text-cyan-300">{asset.apy}%</div>
+              <div className="text-right text-emerald-300">+${asset.pnl} ({asset.pnlPct}%)</div>
+            </div>
+          )}
+          renderMobileCard={(asset) => (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-white font-semibold">{asset.name}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#5e8c96]">
+                    {asset.type}
+                  </p>
+                </div>
+                <div className="text-right text-sm text-[#c7e8e8]">
+                  <div className="font-semibold">${asset.value.toLocaleString()}</div>
+                  <div className="text-[#6faab0]">{asset.apy}% APY</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 rounded-3xl border border-white/10 bg-[#0d2329] px-4 py-3 text-sm text-[#a9d6d7]">
+                <span>P&L</span>
+                <span className="text-emerald-300">+${asset.pnl} ({asset.pnlPct}%)</span>
+              </div>
+            </div>
+          )}
+        />
       </div>
     </div>
   );

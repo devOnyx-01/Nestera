@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import {
-  NotificationPreference,
+  UserPreference,
   DigestFrequency,
 } from './entities/notification-preference.entity';
 import { PendingNotification } from './entities/pending-notification.entity';
@@ -57,8 +57,8 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-    @InjectRepository(NotificationPreference)
-    private readonly preferenceRepository: Repository<NotificationPreference>,
+    @InjectRepository(UserPreference)
+    private readonly preferenceRepository: Repository<UserPreference>,
     @InjectRepository(PendingNotification)
     private readonly pendingRepository: Repository<PendingNotification>,
     @InjectRepository(Delegation)
@@ -602,9 +602,7 @@ export class NotificationsService {
   /**
    * Get or create notification preferences for user
    */
-  async getOrCreatePreferences(
-    userId: string,
-  ): Promise<NotificationPreference> {
+  async getOrCreatePreferences(userId: string): Promise<UserPreference> {
     let preferences = await this.preferenceRepository.findOne({
       where: { userId },
     });
@@ -618,12 +616,26 @@ export class NotificationsService {
   }
 
   /**
+   * Create default preferences for a user
+   */
+  async createPreferences(userId: string): Promise<UserPreference> {
+    return this.getOrCreatePreferences(userId);
+  }
+
+  /**
+   * Delete preference record for a user, falling back to defaults.
+   */
+  async deletePreferences(userId: string): Promise<void> {
+    await this.preferenceRepository.delete({ userId });
+  }
+
+  /**
    * Update notification preferences
    */
   async updatePreferences(
     userId: string,
-    updates: Partial<NotificationPreference>,
-  ): Promise<NotificationPreference> {
+    updates: Partial<UserPreference>,
+  ): Promise<UserPreference> {
     let preferences = await this.getOrCreatePreferences(userId);
 
     Object.assign(preferences, updates);
